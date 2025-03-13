@@ -14,8 +14,7 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
-  if (loading) return <p>Carregando...</p>;
-  if (!user) return null;
+  if (!user) return <p>Sem conexão com o Supabase.</p>;
 
   return <h1>Bem-vindo ao Painel!</h1>;
 }
