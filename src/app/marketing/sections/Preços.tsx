@@ -1,3 +1,5 @@
+import React from "react";
+
 export default function Preços() {
   return (
         <section id="pricing" className="py-20 text-center bg-gray-200">

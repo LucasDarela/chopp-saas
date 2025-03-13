@@ -1,21 +1,22 @@
-import NavBar from "./NavBar";
-import Hero from "./Hero";
-import Funcionalidades from "./Funcionalidades";
-import Preços from "./Preços";
-import Contato from "./Contato";
-import Footer from "./Footer";
-import Testemunhos from "./Testemunhos";
+import React from 'react';
+import Navbar from "../../(marketing)/sections/NavBar";
+import Hero from "../../(marketing)/sections/Hero";
+import Funcionalidades from "../../(marketing)/sections/Funcionalidades";
+import Preços from "../../(marketing)/sections/Preços";
+import Testemunhos from "../../(marketing)/sections/Testemunhos";
+import Contato from "../../(marketing)/sections/Contato";
+import Footer from "../../(marketing)/sections/Footer";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-100">
-        <NavBar />
-        <Hero />
-        <Funcionalidades />
-        <Preços />
-        <Testemunhos />
-        <Contato />
-        <Footer />      
+      <Navbar />
+      <Hero />
+      <Funcionalidades />
+      <Preços />
+      <Testemunhos />
+      <Contato />
+      <Footer />
     </div>
   );
 }

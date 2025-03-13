@@ -1,3 +1,5 @@
+import React from "react";
+
 export default function Funcionalidades() {
   return (
     <section id="features" className="py-20 text-center">

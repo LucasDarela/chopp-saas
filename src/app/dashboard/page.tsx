@@ -1,20 +1,22 @@
 "use client";
 
-import { useAuth } from "@/app/context/AuthContext";
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
-  const { user, loading } = useAuth()!;
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        router.push("/auth/login"); // Redireciona se não estiver logado
+      }
+    };
 
-  if (!user) return <p>Sem conexão com o Supabase.</p>;
+    checkUser();
+  }, [router]);
 
-  return <h1>Bem-vindo ao Painel!</h1>;
+  return <h1>Bem-vindo ao Dashboard!</h1>;
 }

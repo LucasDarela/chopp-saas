@@ -1,3 +1,5 @@
+import React from "react";
+
 export default function Testemunhos() {
     return (
         <section id="testimonials" className="py-20 text-center">
