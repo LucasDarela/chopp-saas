@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "@/app/globals.css";
 import { AuthProvider } from "@/app/context/AuthContext";
 import { Toaster } from "sonner"; // Se estiver usando Sonner para toasts
 

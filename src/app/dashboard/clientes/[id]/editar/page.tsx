@@ -1,80 +1,193 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useRouter, useParams } from "next/navigation";
 import axios from "axios";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
-export default function EditarClientePage() {
+export default function EditarCliente() {
   const router = useRouter();
   const { id } = useParams();
+  const inputRefs = useRef<HTMLInputElement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [cliente, setCliente] = useState({
-    nome: "",
-    tipo: "",
-    documento: "",
+    tipe: "CPF",
+    document: "",
+    name: "",
+    fantasy_name: "",
     cep: "",
-    endereco: "",
-    telefone: "",
+    address: "",
+    bairro: "",
+    city: "",
+    state: "",
+    numero: "",
+    complemento: "",
+    phone: "",
     email: "",
+    state_registration: "",
   });
 
-  useEffect(() => {
-    // Simulação: Buscar dados do cliente (trocar por integração com Supabase)
-    const fetchCliente = async () => {
-      try {
-        const response = await axios.get(`/api/clientes/${id}`); // Ajuste para seu backend
-        setCliente(response.data);
-      } catch (error) {
-        toast.error("Erro ao buscar dados do cliente");
-        router.push("/dashboard/clientes");
-      }
-    };
-
-    if (id) fetchCliente();
-  }, [id, router]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCliente({ ...cliente, [e.target.name]: e.target.value });
+  // 🔹 Mapeamento dos placeholders personalizados
+  const placeholdersMap: Record<string, string> = {
+    document: "CPF/CNPJ",
+    name: "Nome Completo / Razão Social",
+    fantasy_name: "Nome Fantasia",
+    cep: "CEP",
+    address: "Endereço",
+    bairro: "Bairro",
+    city: "Cidade",
+    state: "Estado",
+    numero: "Número",
+    complemento: "Complemento",
+    phone: "Telefone",
+    email: "Email (Opcional)",
+    state_registration: "Inscrição Estadual",
   };
 
-  const handleSave = async () => {
-    try {
-      // Simulação: Atualizar cliente (trocar por integração com Supabase)
-      await axios.put(`/api/clientes/${id}`, cliente);
-      toast.success("Cliente atualizado com sucesso!");
-      router.push("/dashboard/clientes");
-    } catch (error) {
-      toast.error("Erro ao atualizar cliente");
+  // 🔹 Converter para Maiúsculas (exceto email)
+  const formatarMaiusculo = (valor: string, campo: string) => {
+    return campo === "email" ? valor : valor.toUpperCase();
+  };
+
+  // 🔹 Buscar Cliente no Supabase
+  useEffect(() => {
+    const fetchCliente = async () => {
+      if (!id) return;
+
+      console.log("🔍 Buscando cliente ID:", id);
+
+      const { data, error } = await supabase.from("clients").select("*").eq("id", id).single();
+
+      if (error || !data) {
+        toast.error("Erro ao carregar cliente");
+        console.error("❌ Erro ao buscar cliente:", error?.message);
+      } else {
+        console.log("✅ Cliente encontrado:", data);
+
+        setCliente({
+          ...data,
+          name: formatarMaiusculo(data.name || "", "name"),
+          fantasy_name: formatarMaiusculo(data.fantasy_name || "", "fantasy_name"),
+          address: formatarMaiusculo(data.address || "", "address"),
+          bairro: formatarMaiusculo(data.bairro || "", "bairro"),
+          city: formatarMaiusculo(data.city || "", "city"),
+          state: formatarMaiusculo(data.state || "", "state"),
+          state_registration: formatarMaiusculo(data.state_registration || "", "state_registration"),
+        });
+      }
+      setLoading(false);
+    };
+
+    fetchCliente();
+  }, [id]);
+
+  // 🔹 Atualiza os dados ao digitar
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value: rawValue } = e.target;
+    const formattedValue =
+      name === "phone"
+        ? formatarTelefone(rawValue) // 📌 Formata telefone se for o campo "phone"
+        : name === "email"
+        ? rawValue.trim() // 📌 Mantém email inalterado
+        : formatarMaiusculo(rawValue, name); // 📌 Converte para maiúsculo os outros campos
+  
+    setCliente((prevCliente) => ({
+      ...prevCliente,
+      [name]: formattedValue,
+    }));
+  };
+
+  // 🔹 Pula para o próximo campo ao pressionar Enter
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const nextInput = inputRefs.current[index + 1];
+      if (nextInput) {
+        nextInput.focus();
+      }
     }
   };
 
+  // 🔹 Buscar Endereço pelo CEP ao sair do campo
+  const buscarEndereco = async () => {
+    if (!cliente.cep || cliente.cep.length !== 8) return;
+
+    try {
+      const { data } = await axios.get(`https://viacep.com.br/ws/${cliente.cep}/json/`);
+      if (data.erro) {
+        toast.error("CEP inválido!");
+        setCliente((prev) => ({ ...prev, address: "", bairro: "", city: "", state: "" }));
+      } else {
+        setCliente((prev) => ({
+          ...prev,
+          address: formatarMaiusculo(data.logradouro || "", "address"),
+          bairro: formatarMaiusculo(data.bairro || "", "bairro"),
+          city: formatarMaiusculo(data.localidade || "", "city"),
+          state: formatarMaiusculo(data.uf || "", "state"),
+        }));
+      }
+    } catch (error) {
+      toast.error("Erro ao buscar endereço!");
+    }
+  };
+
+  // 🔹 Atualizar Cliente no Supabase
+  const handleUpdate = async () => {
+    const { error } = await supabase.from("clients").update(cliente).eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao atualizar cliente: " + error.message);
+    } else {
+      toast.success("Cliente atualizado com sucesso!");
+      router.push("/dashboard/clientes");
+    }
+  };
+
+  // 🔹 Formatar telefone corretamente
+  const formatarTelefone = (valor: string) => {
+    let telefone = valor.replace(/\D/g, "").slice(0, 11);
+    if (telefone.length >= 3) {
+      telefone = `(${telefone.slice(0, 2)}) ${telefone.slice(2)}`;
+    }
+    return telefone;
+  };
+
+  if (loading) {
+    return <p className="text-center text-gray-500">Carregando cliente...</p>;
+  }
+
   return (
-    <div>
-      {/* Breadcrumb e Voltar */}
-      <div className="flex items-center space-x-2 mb-4">
-        <Button variant="outline" size="icon" onClick={() => router.push("/dashboard/clientes")}> 
-          <ArrowLeft size={20} />
-        </Button>
-        <nav className="text-gray-500">
-          <Link href="/dashboard">Dashboard</Link> / 
-          <Link href="/dashboard/clientes" className="ml-1">Clientes</Link> / 
-          <span className="ml-1 text-black">Editar Cliente</span>
-        </nav>
-      </div>
-      
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-4">Editar Cliente</h1>
-      <Input type="text" name="nome" placeholder="Nome" value={cliente.nome} onChange={handleChange} className="mt-2" />
-      <Input type="text" name="documento" placeholder={cliente.tipo === "CPF" ? "CPF" : "CNPJ"} value={cliente.documento} disabled className="mt-2" />
-      <Input type="text" name="cep" placeholder="CEP" value={cliente.cep} onChange={handleChange} className="mt-2" />
-      <Input type="text" name="endereco" placeholder="Endereço" value={cliente.endereco} onChange={handleChange} className="mt-2" />
-      <Input type="text" name="telefone" placeholder="Telefone" value={cliente.telefone} onChange={handleChange} className="mt-2" />
-      <Input type="email" name="email" placeholder="Email (Opcional)" value={cliente.email} onChange={handleChange} className="mt-2" />
-      
-      <Button className="mt-4 w-full" onClick={handleSave}>Salvar Alterações</Button>
+
+      {/* 🔹 Botões para CPF e CNPJ (desativados) */}
+      <div className="flex gap-2 mb-4">
+        <Button variant={cliente.tipe === "CPF" ? "default" : "outline"} disabled>Pessoa Física</Button>
+        <Button variant={cliente.tipe === "CNPJ" ? "default" : "outline"} disabled>Pessoa Jurídica</Button>
+      </div>
+
+      {/* 🔹 Campos do formulário */}
+      {Object.keys(placeholdersMap).map((campo, index) => {
+        if (cliente.tipe === "CPF" && ["fantasy_name", "state_registration"].includes(campo)) return null;
+        return (
+          <Input
+            key={campo}
+            type={campo === "email" ? "email" : "text"}
+            name={campo}
+            placeholder={placeholdersMap[campo]}
+            value={cliente[campo as keyof typeof cliente]}
+            onChange={handleChange}
+            onBlur={campo === "cep" ? buscarEndereco : undefined}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            className="mt-2"
+          />
+        );
+      })}
+
+      <Button className="mt-4 w-full" onClick={handleUpdate}>Atualizar</Button>
     </div>
   );
 }

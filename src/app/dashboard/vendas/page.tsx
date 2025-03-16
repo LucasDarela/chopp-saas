@@ -1,83 +1,207 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Check, X } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Pencil, Trash } from "lucide-react";
+
+// Definição do tipo Venda
+interface Venda {
+  id: string;
+  cliente: string;
+  numero_documento: string;
+  tipo_documento: string;
+  condicao_pagamento: string;
+  dias_boleto: number;
+  produtos: any[];
+  total: number;
+  frete: number;
+  pago: boolean;
+  agendamento: {
+    data: string;
+    horario: string;
+    localEntrega: string;
+  };
+  cpf_cnpj: string; // Adicionado CPF/CNPJ
+  numero_nota: string; // Adicionado Número da Nota
+  forma_pagamento: string; // Adicionado Forma de Pagamento
+  status_entrega: string; // Adicionado Status da Entrega
+}
 
 export default function ListarVendas() {
   const router = useRouter();
-  
-  // Simulação de dados de vendas (será substituído por dados do Supabase)
-  const [vendas, setVendas] = useState([
-    { id: 1, cliente: "João Silva", produto: "Chopp Heineken", quantidade: 3, total: "R$ 150,00", pago: false },
-    { id: 2, cliente: "Maria Souza", produto: "Chopp Amstel", quantidade: 2, total: "R$ 90,00", pago: true },
-  ]);
-
+  const [vendas, setVendas] = useState<Venda[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedVenda, setSelectedVenda] = useState<Venda | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
 
-  // Filtrar vendas com base na pesquisa
-  const filteredVendas = vendas.filter((venda) =>
-    venda.cliente.toLowerCase().includes(search.toLowerCase().trim()) ||
-    venda.produto.toLowerCase().includes(search.toLowerCase().trim()) ||
-    (search.toLowerCase() === "pago" && venda.pago) ||
-    (search.toLowerCase() === "não pago" && !venda.pago)
-  );
+  // 🔹 Buscar vendas do Supabase
+  useEffect(() => {
+    const fetchVendas = async () => {
+      const { data, error } = await supabase
+        .from("vendas")
+        .select<"id, numeroNota, cliente_id, cliente, numero_documento, forma_pagamento, condicao_pagamento, dias_boleto, total, pago">();
+  
+      if (error) {
+        console.error("Erro ao buscar vendas:", error.message);
+        return;
+      }
+  
+      if (Array.isArray(data)) { // ✅ Garante que `data` é um array antes de usar
+        setVendas(data as unknown as Venda[]);
+      } else {
+        setVendas([]); // ✅ Evita erros caso `data` seja `null` ou `undefined`
+      }
+    };
+  
+    fetchVendas();
+  }, []);
 
-  const togglePago = (id: number) => {
-    setVendas(vendas.map(venda => venda.id === id ? { ...venda, pago: !venda.pago } : venda));
+  // 🔹 Filtrar vendas conforme pesquisa
+  const filteredVendas = search.trim()
+    ? vendas.filter(
+        (venda) =>
+          venda.cliente.toLowerCase().includes(search.toLowerCase()) ||
+          venda.numero_documento.includes(search)
+      )
+    : vendas;
+
+  // 🔹 Abre o modal com detalhes da venda
+  const openModal = (venda: Venda) => {
+    setSelectedVenda(venda);
+    setIsModalOpen(true);
+  };
+
+  // 🔹 Fecha o modal
+  const closeModal = () => {
+    setSelectedVenda(null);
+    setIsModalOpen(false);
+  };
+
+  // 🔹 Redireciona para edição da venda
+  const handleEdit = () => {
+    if (selectedVenda) {
+      router.push(`/dashboard/vendas/${selectedVenda.id}/editar`);
+      closeModal();
+    }
+  };
+
+  // 🔹 Exclui a venda
+  const handleDelete = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir esta venda?")) {
+      const { error } = await supabase.from("vendas").delete().eq("id", id);
+
+      if (error) {
+        toast.error("Erro ao excluir venda: " + error.message);
+      } else {
+        toast.success("Venda excluída com sucesso!");
+        setVendas(vendas.filter((venda) => venda.id !== id));
+        closeModal();
+      }
+    }
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Vendas</h1>
-        <Button onClick={() => router.push("/dashboard/vendas/cadastrar")}>Registrar Venda</Button>
+        <Button onClick={() => router.push("/dashboard/vendas/cadastrar")}>
+          Registrar Venda
+        </Button>
       </div>
 
-      {/* Campo de Pesquisa */}
+      {/* 🔹 Campo de Pesquisa */}
       <div className="mb-4">
-        <Input
+        <input
           type="text"
-          placeholder="Pesquisar por Cliente, Produto ou Status de Pagamento (Pago/Não Pago)"
+          placeholder="Pesquisar por Cliente ou Documento..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full p-2 border rounded-md"
         />
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Produto</TableHead>
-              <TableHead>Quantidade</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Pago</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredVendas.map((venda) => (
-              <TableRow key={venda.id}>
-                <TableCell>{venda.id}</TableCell>
-                <TableCell>{venda.cliente}</TableCell>
-                <TableCell>{venda.produto}</TableCell>
-                <TableCell>{venda.quantidade}</TableCell>
-                <TableCell>{venda.total}</TableCell>
-                <TableCell>
-                  <Button variant="outline" size="icon" onClick={() => togglePago(venda.id)}>
-                    {venda.pago ? <Check size={16} className="text-green-500" /> : <X size={16} className="text-red-500" />}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+{/* 🔹 Tabela de Vendas */}
+{/* 🔹 Tabela de Vendas */}
+<Table className="bg-white p-6 rounded-lg shadow-md">
+  <TableHeader>
+    <TableRow>
+      <TableHead>Nº</TableHead>
+      <TableHead>Cliente</TableHead>
+      <TableHead>CPF/CNPJ</TableHead>
+      <TableHead>Forma de Pagamento</TableHead>
+      <TableHead>Prazo</TableHead>
+      <TableHead>Total</TableHead>
+      <TableHead>Status</TableHead>
+      <TableHead>Ações</TableHead>
+    </TableRow>
+  </TableHeader>
+
+  <TableBody>
+    {vendas.length > 0 ? (
+      <>
+        {vendas.map((venda: Venda) => (
+          <TableRow key={venda.id}>
+            <TableCell>{venda.numero_nota ?? "N/A"}</TableCell>
+            <TableCell>{venda.cliente ?? "Desconhecido"}</TableCell>
+            <TableCell>{venda.numero_documento ?? "-"}</TableCell>
+            <TableCell>{venda.forma_pagamento ?? "Não informado"}</TableCell>
+            <TableCell>
+              {(venda.forma_pagamento === "boleto" || venda.forma_pagamento === "cartao") 
+                ? `${venda.dias_boleto ?? 12} dias` 
+                : "-"}
+            </TableCell>
+            <TableCell>R$ {venda.total?.toFixed(2) ?? "0,00"}</TableCell>
+            <TableCell>{venda.pago ? "Pago" : "Pendente"}</TableCell>
+            <TableCell>
+              <Button onClick={() => openModal(venda)}>Ver Detalhes</Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </>
+    ) : (
+      <TableRow>
+        <TableCell colSpan={8} className="text-center py-4">
+          Nenhuma venda encontrada.
+        </TableCell>
+      </TableRow>
+    )}
+  </TableBody>
+</Table>
+
+      {/* 🔹 Modal de Detalhes da Venda */}
+{selectedVenda && (
+  <Dialog open={isModalOpen} onOpenChange={closeModal}>
+    <DialogContent className="max-w-lg w-full bg-white rounded-md shadow-lg p-6">
+      <DialogHeader>
+        <DialogTitle>Detalhes da Venda</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-2">
+        <p><strong>Número da Nota:</strong> {selectedVenda.numero_nota}</p>
+        <p><strong>Cliente:</strong> {selectedVenda.cliente}</p>
+        <p><strong>CPF/CNPJ:</strong> {selectedVenda.numero_documento}</p>
+        <p><strong>Forma de Pagamento:</strong> {selectedVenda.forma_pagamento}</p>
+        <p><strong>Prazo:</strong> {selectedVenda.condicao_pagamento === "boleto" ? `${selectedVenda.dias_boleto} dias` : "-"}</p>
+        <p><strong>Total:</strong> R$ {selectedVenda.total.toFixed(2)}</p>
+        <p><strong>Status:</strong> {selectedVenda.pago ? "Pago" : "Pendente"}</p>
       </div>
+      <DialogFooter className="flex justify-between">
+        <Button variant="destructive" onClick={() => handleDelete(selectedVenda.id)}>
+          <Trash className="mr-2 h-4 w-4" /> Excluir
+        </Button>
+        <Button onClick={handleEdit}>
+          <Pencil className="mr-2 h-4 w-4" /> Editar Venda
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+)}
+    
     </div>
   );
 }
