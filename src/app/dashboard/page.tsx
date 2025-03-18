@@ -49,7 +49,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-sm text-gray-500">Receita Total</h2>
+                <h2 className="text-sm text-gray-500">Receita Total Mensal</h2>
                 <p className="text-2xl font-bold">R$ 45.231,89</p>
                 <p className="text-xs text-green-500">+20.1% desde o mês passado</p>
               </CardContent>
@@ -57,7 +57,7 @@ export default function Dashboard() {
 
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-sm text-gray-500">Assinaturas</h2>
+                <h2 className="text-sm text-gray-500">Contas a Pagar</h2>
                 <p className="text-2xl font-bold">+2.350</p>
                 <p className="text-xs text-green-500">+180.1% desde o mês passado</p>
               </CardContent>
@@ -65,7 +65,7 @@ export default function Dashboard() {
 
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-sm text-gray-500">Vendas</h2>
+                <h2 className="text-sm text-gray-500">Contas a Receber</h2>
                 <p className="text-2xl font-bold">+12.234</p>
                 <p className="text-xs text-green-500">+19% desde o mês passado</p>
               </CardContent>

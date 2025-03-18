@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 type Cliente = {
   id: number;
   name: string;
-  tipe: string;
+  type: string;
   document: string;
   phone: string;
   cep: string;
@@ -149,7 +149,7 @@ export default function ListarClientes() {
               filteredClientes.map((cliente) => (
                 <TableRow key={cliente.id} onClick={() => openModal(cliente)} className="cursor-pointer hover:bg-gray-100">
                   <TableCell>{cliente.name}</TableCell>
-                  <TableCell className="hidden md:table-cell">{cliente.tipe}</TableCell>
+                  <TableCell className="hidden md:table-cell">{cliente.type}</TableCell>
                   <TableCell className="hidden md:table-cell">{cliente.document}</TableCell>
                   <TableCell className="hidden md:table-cell">{cliente.phone}</TableCell>
                   <TableCell className="hidden md:table-cell">{cliente.city}</TableCell>
@@ -176,7 +176,7 @@ export default function ListarClientes() {
             <div className="space-y-2">
               <p><strong>Nome:</strong> {selectedCliente.name}</p>
               {selectedCliente.fantasy_name && <p><strong>Nome Fantasia:</strong> {selectedCliente.fantasy_name}</p>}
-              <p><strong>Tipo:</strong> {selectedCliente.tipe}</p>
+              <p><strong>Tipo:</strong> {selectedCliente.type}</p>
               <p><strong>Documento:</strong> {selectedCliente.document}</p>
               <p><strong>Telefone:</strong> {selectedCliente.phone}</p>
               <p><strong>CEP:</strong> {selectedCliente.cep}</p>

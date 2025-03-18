@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Users,
@@ -19,6 +18,7 @@ import {
   Calendar,
   ScrollText,
   Wheat,
+  Factory,
 } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
@@ -106,15 +106,15 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: 
         <h3 className="text-[12px] tracking-tighter text-gray-400 mb-2 px-2">Admin</h3>
         <SidebarItem href="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" collapsed={isCollapsed} />
         <SidebarItem href="/dashboard/clientes" icon={<Users size={20} />} label="Clientes" collapsed={isCollapsed} />
+        <SidebarItem href="/dashboard/fornecedores" icon={<Factory size={20} />} label="Fornecedores" collapsed={isCollapsed} />
         <SidebarItem href="/dashboard/produtos" icon={<Wheat size={20} />} label="Produtos" collapsed={isCollapsed} />
-        <SidebarItem href="/dashboard/estoque" icon={<Package size={20} />} label="Estoque" collapsed={isCollapsed} />
         <SidebarItem href="/dashboard/financeiro" icon={<Wallet size={20} />} label="Financeiro" collapsed={isCollapsed} />
 
         <h3 className="text-[12px] tracking-tighter tracking-tighter text-gray-400 mt-4 mb-2 px-2">Gestão</h3>
         <SidebarItem href="/dashboard/vendas" icon={<Beer size={20} />} label="Vendas" collapsed={isCollapsed} />
-        <SidebarItem href="/dashboard/entregas" icon={<Truck size={20} />} label="Entregas" collapsed={isCollapsed} />
-        <SidebarItem href="/dashboard/agendamentos" icon={<Calendar size={20} />} label="Agendamentos" collapsed={isCollapsed} />
         <SidebarItem href="/dashboard/inventario" icon={<NotepadText size={20} />} label="Inventário" collapsed={isCollapsed} />
+        <SidebarItem href="/dashboard/entregas" icon={<Truck size={20} />} label="Delivery" collapsed={isCollapsed} />
+        <SidebarItem href="/dashboard/agendamentos" icon={<Calendar size={20} />} label="Agendamentos" collapsed={isCollapsed} />
         <SidebarItem href="/dashboard/relatorios" icon={<ScrollText size={20} />} label="Relatórios" collapsed={isCollapsed} />
 
       </div>

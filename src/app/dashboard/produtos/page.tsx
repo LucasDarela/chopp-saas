@@ -122,7 +122,7 @@ export default function ListarProdutos() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Produtos</h1>
         <Button onClick={() => router.push("/dashboard/produtos/cadastrar")} className="w-full sm:w-auto">
           Adicionar Produto
@@ -141,7 +141,7 @@ export default function ListarProdutos() {
       </div>
 
       {/* 🔹 Tabela de Produtos */}
-      <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+      <div className="bg-white p-4 rounded-lg shadow-md overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="hidden sm:table-row">
@@ -150,6 +150,7 @@ export default function ListarProdutos() {
               <TableHead>Categoria</TableHead>
               <TableHead>Preço</TableHead>
               <TableHead>Estoque</TableHead>
+              <TableHead>Comodato Vinculado</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -161,6 +162,7 @@ export default function ListarProdutos() {
                   <TableCell className="hidden sm:table-cell">{produto.classe_material || "N/A"}</TableCell>
                   <TableCell className="hidden sm:table-cell">{produto.preco}</TableCell>
                   <TableCell className="hidden sm:table-cell">{produto.estoque}</TableCell>
+                  <TableCell>{produto.codigo_comodato || ""}</TableCell>
                 </TableRow>
               ))
             ) : (
@@ -198,6 +200,7 @@ export default function ListarProdutos() {
               <p><strong>Origem:</strong> {selectedProduto.origem}</p>
               <p><strong>Aplicação:</strong> {selectedProduto.aplicacao}</p>
               <p><strong>Estoque:</strong> {selectedProduto.estoque}</p>
+              <p><strong>Comodato Vinculado:</strong> {selectedProduto.codigo_comodato}</p>
             </div>
             <DialogFooter className="flex justify-between">
               <Button variant="destructive" onClick={() => handleDelete(selectedProduto.id)}>

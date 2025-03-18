@@ -151,24 +151,33 @@ export default function CadastrarVenda() {
 
     setLoading(true);
 
+      // 🔹 Garantindo que agendamento está preenchido corretamente
+  const agendamentoData = {
+    data: agendamento.data ? format(agendamento.data, "yyyy-MM-dd") : null,
+    horario: agendamento.horario || null,
+    localEntrega: agendamento.localEntrega || null,
+  };
+
     const novaVenda = {
       cliente_id: venda.cliente_id,
       cliente: clienteSelecionado?.name || "",
       numero_documento: clienteSelecionado?.document || "",
       tipo_documento: venda.tipoDocumento,
-      forma_pagamento: venda.formaPagamento, // Adicionando a forma de pagamento
+      numero_nota: venda.numeroNota || "",
+      forma_pagamento: venda.formaPagamento,
       condicao_pagamento: venda.condicaoPagamento,
-      dias_boleto: venda.formaPagamento === "boleto" ? parseInt(venda.diasBoleto) : null, // Apenas se for boleto
+      dias_boleto: venda.formaPagamento === "boleto" ? parseInt(venda.diasBoleto) : null,
+      total: calcularTotal(),
+      frete: frete || 0,
+      pago: false,
+      status_entrega: "Pendente",
+      agendamento: agendamentoData, // 🔹 Garantindo que os dados de agendamento estão indo corretamente
       produtos: produtosSelecionados.map((p) => ({
         id: p.id,
         nome: p.nome,
         quantidade: p.quantidade,
         preco: p.preco,
       })),
-      total: calcularTotal(),
-      frete: frete,
-      pago: false,
-      agendamento: venda.agendamento,
     };
 
     console.log("Enviando venda para Supabase:", novaVenda); // 🔍 Depuração
