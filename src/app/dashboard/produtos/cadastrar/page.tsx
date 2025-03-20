@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +27,34 @@ export default function AdicionarProduto() {
   const [imagem, setImagem] = useState<File | null>(null);
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEmpresaId = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+      if (authError || !user) {
+        console.error("❌ Erro ao buscar usuário autenticado:", authError?.message);
+        toast.error("Erro ao carregar informações do usuário.");
+        return;
+      }
+  
+      const { data: usuario, error: usuarioError } = await supabase
+        .from("user")
+        .select("empresa_id")
+        .eq("email", user.email)
+        .maybeSingle();
+  
+      if (usuarioError || !usuario) {
+        console.error("❌ Erro ao buscar empresa do usuário:", usuarioError?.message);
+        toast.error("Erro ao carregar dados da empresa.");
+        return;
+      }
+  
+      setEmpresaId(usuario.empresa_id);
+    };
+    fetchEmpresaId();
+  }, []);
 
   // 🔹 Manipular inputs de texto
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -78,10 +106,7 @@ export default function AdicionarProduto() {
 
   // 🔹 Enviar dados para o Supabase
   const handleSubmit = async () => {
-    setLoading(true);
-
-    // 🔹 Validar campos obrigatórios
-    if (!produto.nome || !produto.preco || !produto.classeMaterial || !produto.codigo) {
+    if (!produto.nome || !produto.preco || !produto.classeMaterial || !produto.codigo || !empresaId) {
       toast.error("Preencha os campos obrigatórios!");
       setLoading(false);
       return;
@@ -92,7 +117,8 @@ export default function AdicionarProduto() {
       .from("produtos")
       .select("codigo")
       .eq("codigo", produto.codigo)
-      .single();
+      .eq("empresa_id", empresaId)
+      .maybeSingle();
 
     if (checkError && checkError.code !== "PGRST116") {
       toast.error("Erro ao verificar código do produto!");
@@ -124,6 +150,7 @@ export default function AdicionarProduto() {
         aplicacao: produto.aplicacao || null,
         codigo_comodato: produto.codigoComodato || null,
         imagem_url: imagemUrl || null,
+        empresa_id: empresaId,
       },
     ]);
 

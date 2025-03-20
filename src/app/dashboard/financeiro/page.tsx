@@ -31,7 +31,7 @@ export default function Financeiro() {
   useEffect(() => {
     const fetchNotas = async () => {
       const { data, error } = await supabase
-        .from("financeiro")
+        .from("contas_a_pagar")
         .select("*")
         .order("data", { ascending: false });
 
@@ -70,7 +70,7 @@ export default function Financeiro() {
   // 🔹 Exclui uma nota
   const handleDelete = async (id: number) => {
     if (confirm("Tem certeza que deseja excluir esta nota?")) {
-      const { error } = await supabase.from("financeiro").delete().eq("id", id);
+      const { error } = await supabase.from("contas_a_pagar").delete().eq("id", id);
 
       if (error) {
         toast.error("Erro ao excluir nota: " + error.message);

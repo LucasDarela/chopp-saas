@@ -183,17 +183,18 @@ export default function ListarVendas() {
       <p><strong>Número da Nota:</strong> {selectedVenda.numero_nota ? selectedVenda.numero_nota : "Não informado"}</p>
         <p><strong>Cliente:</strong> {selectedVenda.cliente}</p>
         <p><strong>CPF/CNPJ:</strong> {selectedVenda.numero_documento}</p>
+
         <p><strong>Forma de Pagamento:</strong> {selectedVenda.forma_pagamento}</p>
-        <p><strong>Prazo:</strong> {selectedVenda.condicao_pagamento === "boleto" ? `${selectedVenda.dias_boleto} dias` : "-"}</p>
-        <p><strong>Total:</strong> R$ {selectedVenda.total.toFixed(2)}</p>
+        <p><strong>Prazo:</strong> {selectedVenda.condicao_pagamento === "boleto" ? `${selectedVenda.dias_boleto} dias` : "À vista"}</p>
         <p><strong>Frete:</strong> R$ {(Number(selectedVenda.frete) || 0).toFixed(2)}</p>
+        <p><strong>Total:</strong> R$ {selectedVenda.total.toFixed(2)}</p>
  {/* 🔹 Agendamento - Data, Horário e Local */}
- <p><strong>Data de Entrega:</strong> {selectedVenda.agendamento?.data ? format(new Date(selectedVenda.agendamento.data), "dd/MM/yyyy") : "Não definido"}</p>
+        <p><strong>Data de Entrega:</strong> {selectedVenda.agendamento?.data ? format(new Date(selectedVenda.agendamento.data), "dd/MM/yyyy") : "Não definido"}</p>
         <p><strong>Horário:</strong> {selectedVenda.agendamento?.horario ?? "Não informado"}</p>
         <p><strong>Local de Entrega:</strong> {selectedVenda.agendamento?.localEntrega ?? "Não informado"}</p>
 
-        {/* 🔹 Exibir Produtos Vendidos */}
-        <h3 className="font-bold mt-4">Produtos Vendidos</h3>
+                {/* 🔹 Exibir Produtos Vendidos */}
+                <p><strong>Produtos Vendidos:</strong> </p>
         {selectedVenda.produtos && selectedVenda.produtos.length > 0 ? (
           <ul className="list-disc ml-6">
             {selectedVenda.produtos.map((produto, index) => (

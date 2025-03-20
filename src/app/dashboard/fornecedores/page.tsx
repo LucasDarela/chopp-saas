@@ -22,11 +22,12 @@ type Fornecedor = {
   bairro: string;
   city: string;
   state: string;
-  numero: string;
-  complemento: string;
-  email: string;
+  numero?: string;
+  complemento?: string;
+  email?: string;
   state_registration?: string;
   fantasy_name?: string;
+  empresa_id: string;
 };
 
 export default function ListarFornecedores() {
@@ -35,24 +36,61 @@ export default function ListarFornecedores() {
   const [search, setSearch] = useState<string>("");
   const [selectedFornecedor, setSelectedFornecedor] = useState<Fornecedor | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
 
-  // 🔹 Buscar fornecedores no Supabase
+  // 🔹 Buscar fornecedores no Supabase filtrados por empresa_id
   useEffect(() => {
     const fetchFornecedores = async () => {
-      const { data, error } = await supabase
-        .from("fornecedores")
-        .select("*")
-        .order("name", { ascending: true });
-
-      if (error) {
-        console.error("Erro ao buscar fornecedores:", error.message);
-      } else {
-        setFornecedores(data || []);
+      try {
+        // 🔹 Obtém o usuário autenticado
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+        if (authError || !user) {
+          console.error("❌ Erro ao buscar usuário autenticado:", authError?.message);
+          toast.error("Erro ao carregar informações do usuário.");
+          return;
+        }
+        console.log("✅ Usuário autenticado:", user);
+  
+        // 🔹 Busca o usuário na tabela `user` pelo e-mail para pegar a empresa_id
+        const { data: usuario, error: usuarioError } = await supabase
+          .from("user")
+          .select("empresa_id")
+          .eq("email", user.email) // 🔹 Busca pelo email, pois o id da auth não corresponde ao id da tabela user
+          .maybeSingle();
+  
+        if (usuarioError || !usuario || !usuario.empresa_id) {
+          console.error("❌ Nenhuma empresa encontrada para o usuário:", usuarioError?.message);
+          toast.error("Erro ao carregar empresa. Nenhuma empresa associada ao usuário.");
+          return;
+        }
+  
+        console.log("✅ Empresa ID encontrado:", usuario.empresa_id);
+        setEmpresaId(usuario.empresa_id);
+  
+        // 🔹 Agora busca apenas os fornecedores vinculados à empresa do usuário
+        const { data: fornecedores, error: fornecedoresError } = await supabase
+          .from("fornecedores")
+          .select("*")
+          .eq("empresa_id", usuario.empresa_id)
+          .order("name", { ascending: true });
+  
+        if (fornecedoresError) {
+          console.error("❌ Erro ao buscar fornecedores:", fornecedoresError.message);
+          toast.error("Erro ao carregar fornecedores.");
+        } else {
+          console.log("✅ Fornecedores carregados:", fornecedores);
+          setFornecedores(fornecedores ?? []); // ✅ Garante que sempre será um array válido
+        }
+      } catch (error) {
+        console.error("❌ Erro inesperado ao buscar fornecedores:", error);
+        toast.error("Erro inesperado ao carregar fornecedores.");
       }
     };
-
+  
     fetchFornecedores();
   }, []);
+
 
   // 🔹 Normaliza texto (remove acentos e converte para minúsculas)
   const normalizeText = (text: string) => {

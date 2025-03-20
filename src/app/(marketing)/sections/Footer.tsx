@@ -65,45 +65,6 @@ export default function Footer() {
         </nav>
 
         <div className="flex flex-col items-center gap-6 mt-6">
-          <div className="flex gap-6">
-            {/* <a
-              href="#"
-              aria-label="X/Twitter"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#008200]"
-            >
-              <SocialX className="hover:text-[#008200]" />
-            </a>
-            <a
-              href="https://www.instagram.com/darela.chopp"
-              aria-label="Instagram"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#008200]"
-            >
-              <SocialInsta className="hover:text-[#008200]" />
-            </a>
-            <a
-              href="#"
-              aria-label="LinkedIn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#008200]"
-            >
-              <SocialLinkedIn className="hover:text-[#008200]" />
-            </a>
-            <a
-              href="#"
-              aria-label="YouTube"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-[#008200]"
-            >
-              <SocialYoutube className="hover:text-[#008200]" />
-            </a> */}
-          </div>
-
           <p className="mt-6">
             © 2025 Neotech X. Todos os direitos reservados.
           </p>

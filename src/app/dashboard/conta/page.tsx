@@ -159,7 +159,7 @@ export default function AjusteConta() {
           <label htmlFor="imagemUpload" className="cursor-pointer">
             {imagemPreview ? (
               <Avatar className="h-20 w-20">
-        <AvatarImage src={imagemPreview || "https://via.placeholder.com/150"} alt="Avatar" />
+        <AvatarImage src={imagemPreview || "https://dummyimage.com/150"} alt="Avatar" />
         <AvatarFallback>{user?.user_metadata?.full_name?.charAt(0) || "U"}</AvatarFallback>
               </Avatar>
             ) : (

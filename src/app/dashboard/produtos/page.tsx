@@ -37,28 +37,49 @@ export default function ListarProdutos() {
   const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 🔹 Buscar produtos no Supabase
+  // 🔹 Buscar produtos filtrados pelo empresa_id do usuário
   useEffect(() => {
     const fetchProdutos = async () => {
       try {
-        const { data, error } = await supabase
-          .from("produtos")
-          .select("id, codigo, nome, fabricante, preco, tributos, classe_material, sub_classe, classificacao_fiscal, origem, aplicacao, codigo_comodato, estoque, imagem_url")
-          .order("codigo", { ascending: true }); 
-
-        if (error) {
-          throw new Error(error.message);
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+        if (authError || !user) {
+          console.error("❌ Erro ao buscar usuário autenticado:", authError?.message);
+          toast.error("Erro ao carregar informações do usuário.");
+          return;
         }
-
-        console.log("✅ Produtos carregados:", data);
-        setProdutos(data || []);
-        setFilteredProdutos(data || []);
+  
+        const { data: usuario, error: usuarioError } = await supabase
+          .from("user")
+          .select("empresa_id")
+          .eq("email", user.email)
+          .maybeSingle();
+  
+        if (usuarioError || !usuario) {
+          console.error("❌ Erro ao buscar empresa do usuário:", usuarioError?.message);
+          toast.error("Erro ao carregar dados da empresa.");
+          return;
+        }
+  
+        const { data: produtos, error: produtosError } = await supabase
+          .from("produtos")
+          .select("*")
+          .eq("empresa_id", usuario.empresa_id)
+          .order("codigo", { ascending: true });
+  
+        if (produtosError) {
+          console.error("Erro ao buscar produtos:", produtosError.message);
+          toast.error("Erro ao carregar produtos.");
+        } else {
+          setProdutos(produtos || []);
+          setFilteredProdutos(produtos || []);
+        }
       } catch (error) {
-        console.error("❌ Erro ao buscar produtos:", error);
-        toast.error("Erro ao carregar produtos.");
+        console.error("❌ Erro inesperado ao buscar produtos:", error);
+        toast.error("Erro inesperado ao carregar produtos.");
       }
     };
-
+  
     fetchProdutos();
   }, []);
 
@@ -141,7 +162,7 @@ export default function ListarProdutos() {
       </div>
 
       {/* 🔹 Tabela de Produtos */}
-      <div className="bg-white p-4 rounded-lg shadow-md overflow-x-auto">
+      <div className="bg-white p-4 rounded-lg shadow-md overflow-x-auto max-w-full">
         <Table>
           <TableHeader>
             <TableRow className="hidden sm:table-row">
@@ -167,7 +188,7 @@ export default function ListarProdutos() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={5} className="text-center ">
                   Nenhum produto encontrado
                 </TableCell>
               </TableRow>

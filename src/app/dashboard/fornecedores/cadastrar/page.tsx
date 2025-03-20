@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +11,33 @@ import axios from "axios";
 export default function CadastrarFornecedor() {
   const router = useRouter();
   const inputRefs = useRef<HTMLInputElement[]>([]);
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEmpresaId = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("❌ Erro ao buscar usuário autenticado:", authError?.message);
+        toast.error("Erro ao carregar informações do usuário.");
+        return;
+      }
+      
+      const { data: usuario, error: usuarioError } = await supabase
+        .from("user")
+        .select("empresa_id")
+        .eq("email", user.email)
+        .maybeSingle();
+      
+      if (usuarioError || !usuario) {
+        console.error("❌ Erro ao buscar empresa do usuário:", usuarioError?.message);
+        toast.error("Erro ao carregar dados da empresa.");
+        return;
+      }
+      
+      setEmpresaId(usuario.empresa_id);
+    };
+    fetchEmpresaId();
+  }, []);
   
   const [fornecedor, setFornecedor] = useState({
     type: "PJ",
@@ -51,6 +78,7 @@ export default function CadastrarFornecedor() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value: rawValue } = e.target;
+    
     const formattedValue = name === "phone"
       ? formatarTelefone(rawValue)
       : name === "email"
@@ -136,7 +164,7 @@ export default function CadastrarFornecedor() {
   };
 
   const handleSubmit = async () => {
-    if (!fornecedor.name || !fornecedor.document) {
+    if (!fornecedor.name || !fornecedor.document || !empresaId) {
       toast.error("Preencha os campos obrigatórios!");
       return;
     }
@@ -145,10 +173,11 @@ export default function CadastrarFornecedor() {
       .from("fornecedores")
       .select("id")
       .eq("document", fornecedor.document)
-      .single();
+      .eq("empresa_id", empresaId)
+      .maybeSingle();
 
-    if (consultaError && consultaError.code !== "PGRST116") {
-      toast.error("Erro ao verificar CNPJ!");
+    if (fornecedorExistente) {
+      toast.error("Já existe um fornecedor com esse CNPJ!");
       return;
     }
 
@@ -157,7 +186,9 @@ export default function CadastrarFornecedor() {
       return;
     }
 
-    const { error } = await supabase.from("fornecedores").insert([fornecedor]);
+    const { error } = await supabase.from("fornecedores").insert([
+      { ...fornecedor, empresa_id: empresaId },
+    ]);
 
     if (error) {
       toast.error("Erro ao cadastrar fornecedor: " + error.message);

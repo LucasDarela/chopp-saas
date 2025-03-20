@@ -80,7 +80,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: 
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-all">
         <Avatar>
-        <AvatarImage src={avatarUrl || "https://via.placeholder.com/150"} alt="Avatar" />
+        <AvatarImage src={avatarUrl || "https://dummyimage.com/150"} alt="Avatar" />
         <AvatarFallback>{user?.user_metadata?.full_name?.charAt(0) || "U"}</AvatarFallback>
         </Avatar>
           {!isCollapsed && (
@@ -113,7 +113,6 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: 
         <h3 className="text-[12px] tracking-tighter tracking-tighter text-gray-400 mt-4 mb-2 px-2">Gestão</h3>
         <SidebarItem href="/dashboard/vendas" icon={<Beer size={20} />} label="Vendas" collapsed={isCollapsed} />
         <SidebarItem href="/dashboard/inventario" icon={<NotepadText size={20} />} label="Inventário" collapsed={isCollapsed} />
-        <SidebarItem href="/dashboard/entregas" icon={<Truck size={20} />} label="Delivery" collapsed={isCollapsed} />
         <SidebarItem href="/dashboard/agendamentos" icon={<Calendar size={20} />} label="Agendamentos" collapsed={isCollapsed} />
         <SidebarItem href="/dashboard/relatorios" icon={<ScrollText size={20} />} label="Relatórios" collapsed={isCollapsed} />
 

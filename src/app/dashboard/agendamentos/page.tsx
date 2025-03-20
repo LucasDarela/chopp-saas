@@ -1,14 +1,13 @@
 "use client";
 
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { format, parseISO, isBefore, isToday } from "date-fns";
-import { Calendar, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 
 // 🔹 Tipo Agendamento
 interface Agendamento {
@@ -28,28 +27,33 @@ export default function Agendamentos() {
   // 🔹 Buscar agendamentos a partir das vendas no Supabase
   useEffect(() => {
     const fetchAgendamentos = async () => {
-      const { data, error } = await supabase
-        .from("vendas")
-        .select("id, numeroNota, cliente, agendamento, status")
-        .order("agendamento->>data", { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from("vendas")
+          .select("id, numero_nota, cliente, agendamento, status")
+          .neq("agendamento->>data", null) // 🔹 Buscar apenas vendas que possuem data de agendamento
+          .order("agendamento->>data", { ascending: true });
 
-      if (error) {
-        console.error("Erro ao buscar agendamentos:", error.message);
-        toast.error("Erro ao carregar agendamentos.");
-      } else {
-        const agendamentosFormatados = data
-          .filter((venda) => venda.agendamento?.data)
-          .map((venda) => ({
-            id: venda.id,
-            numeroNota: venda.numeroNota || "N/A",
-            cliente: venda.cliente,
-            data: venda.agendamento.data,
-            horario: venda.agendamento.horario || "Sem horário",
-            localEntrega: venda.agendamento.localEntrega || "Não informado",
-            status: venda.status || "Pendente",
-          }));
+        if (error) {
+          console.error("❌ Erro ao buscar agendamentos:", error.message);
+          toast.error("Erro ao carregar agendamentos.");
+          return;
+        }
+
+        const agendamentosFormatados = data.map((venda) => ({
+          id: venda.id,
+          numeroNota: venda.numero_nota || "N/A",
+          cliente: venda.cliente,
+          data: venda.agendamento?.data || "", // 🔹 Certifique-se que a data existe
+          horario: venda.agendamento?.horario || "Sem horário",
+          localEntrega: venda.agendamento?.localEntrega || "Não informado",
+          status: venda.status || "Pendente",
+        }));
 
         setAgendamentos(agendamentosFormatados);
+      } catch (error) {
+        console.error("❌ Erro ao processar agendamentos:", error);
+        toast.error("Erro ao processar os dados de agendamentos.");
       }
     };
 
@@ -58,9 +62,23 @@ export default function Agendamentos() {
 
   // 🔹 Agrupar agendamentos por data
   const agendamentosAgrupados = agendamentos.reduce((acc, agendamento) => {
-    const dataFormatada = format(parseISO(agendamento.data), "dd/MM/yyyy");
+    const dataFormatada = agendamento.data ? format(parseISO(agendamento.data), "dd/MM/yyyy") : "Data Inválida";
     if (!acc[dataFormatada]) acc[dataFormatada] = [];
     acc[dataFormatada].push(agendamento);
+    return acc;
+  }, {} as Record<string, Agendamento[]>);
+
+  // 🔹 Filtragem pelo campo de pesquisa
+  const agendamentosFiltrados = Object.entries(agendamentosAgrupados).reduce((acc, [data, agendamentosDoDia]) => {
+    const filtrados = agendamentosDoDia.filter(
+      (a) =>
+        a.cliente.toLowerCase().includes(search.toLowerCase()) ||
+        a.numeroNota.toLowerCase().includes(search.toLowerCase()) ||
+        a.localEntrega.toLowerCase().includes(search.toLowerCase())
+    );
+    if (filtrados.length > 0) {
+      acc[data] = filtrados;
+    }
     return acc;
   }, {} as Record<string, Agendamento[]>);
 
@@ -96,8 +114,8 @@ export default function Agendamentos() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.keys(agendamentosAgrupados).length > 0 ? (
-              Object.entries(agendamentosAgrupados).map(([data, agendamentosDoDia]) => (
+            {Object.keys(agendamentosFiltrados).length > 0 ? (
+              Object.entries(agendamentosFiltrados).map(([data, agendamentosDoDia]) => (
                 <React.Fragment key={data}>
                   <TableRow className="bg-gray-100">
                     <TableCell colSpan={6} className="text-center font-bold py-3">
@@ -106,7 +124,15 @@ export default function Agendamentos() {
                   </TableRow>
                   {agendamentosDoDia.map((agendamento) => (
                     <TableRow key={agendamento.id} className="h-16">
-                      <TableCell className={isToday(parseISO(agendamento.data)) ? "text-blue-600 font-bold" : isBefore(parseISO(agendamento.data), new Date()) ? "text-red-600" : ""}>
+                      <TableCell
+                        className={
+                          isToday(parseISO(agendamento.data))
+                            ? "text-blue-600 font-bold"
+                            : isBefore(parseISO(agendamento.data), new Date())
+                            ? "text-red-600"
+                            : ""
+                        }
+                      >
                         {format(parseISO(agendamento.data), "dd/MM/yyyy")}
                       </TableCell>
                       <TableCell>
@@ -116,7 +142,15 @@ export default function Agendamentos() {
                       <TableCell>{agendamento.cliente}</TableCell>
                       <TableCell>{agendamento.numeroNota}</TableCell>
                       <TableCell>{agendamento.localEntrega}</TableCell>
-                      <TableCell className={agendamento.status === "Concluído" ? "text-green-600 font-bold" : agendamento.status === "Cancelado" ? "text-red-600" : ""}>
+                      <TableCell
+                        className={
+                          agendamento.status === "Concluído"
+                            ? "text-green-600 font-bold"
+                            : agendamento.status === "Cancelado"
+                            ? "text-red-600"
+                            : ""
+                        }
+                      >
                         {agendamento.status}
                       </TableCell>
                     </TableRow>
